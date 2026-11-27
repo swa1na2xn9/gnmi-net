@@ -38,8 +38,9 @@ python3 -m gnmi_net.cli \
 ```
 
 Exit codes: `0` no drift, `2` drift, `3` drift outside the change window,
-`1` unreadable input. `--force` prints the plan outside the window anyway.
-`--json` emits the change list for tooling.
+`4` drift blocked by policy, `1` unreadable input. `--force` prints the plan
+outside the window or past a policy anyway. `--json` emits the change list for
+tooling.
 
 Entries prefixed `!` are high risk: removals or value changes inside the BGP or
 interface subtrees. Review those first.
@@ -64,13 +65,39 @@ a clean exit code is the rollback proof, not a log line from the device.
 is local clock based, so keep NTP honest on the jump host. Planned maintenance
 uses the window; break-fix uses `--force` and notes the override in the ticket.
 
+## Guardrails
+
+`--policy FILE` caps the blast radius before the window check runs. A policy is
+JSON, versioned next to the trees:
+
+```json
+{
+  "max_changes": 8,
+  "max_high_risk": 1,
+  "protected": ["/network-instances/network-instance[0]/protocols"]
+}
+```
+
+`max_changes` defaults to 20, `max_high_risk` to 5. `protected` entries are
+literal path prefixes and reject any leaf below them, so touching routing
+protocols needs a deliberate policy edit rather than a rushed `--force`.
+Violations print to stderr and exit 4.
+
+## Tests
+
+```sh
+python3 -m unittest discover -s tests
+```
+
 ## Layout
 
 ```text
 gnmi_net/model.py    tree loading, flattening, slash pointers
 gnmi_net/diff.py     leaf diff, risk classification, rollback payload
 gnmi_net/dryrun.py   change window parsing and plan rendering
+gnmi_net/policy.py   guardrail policy parsing and violation checks
 gnmi_net/cli.py      argument parsing and exit codes
+tests/               policy and CLI exit code tests
 examples/leaf-01/    desired and running trees for the lab leaf
 ```
 
