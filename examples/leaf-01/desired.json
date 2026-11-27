@@ -1,0 +1,47 @@
+{
+  "interfaces": {
+    "interface": [
+      {
+        "name": "ethernet1",
+        "config": {
+          "admin-state": "enable",
+          "mtu": 9214
+        }
+      }
+    ]
+  },
+  "network-instances": {
+    "network-instance": [
+      {
+        "name": "default",
+        "protocols": {
+          "protocol": [
+            {
+              "name": "bgp",
+              "identifier": "BGP",
+              "bgp": {
+                "global": {
+                  "config": {
+                    "as": 65001,
+                    "router-id": "192.0.2.1"
+                  }
+                },
+                "neighbors": {
+                  "neighbor": [
+                    {
+                      "neighbor-address": "192.0.2.5",
+                      "config": {
+                        "peer-as": 65010,
+                        "description": "spine-01 uplink"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
